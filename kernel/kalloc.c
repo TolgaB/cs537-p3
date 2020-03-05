@@ -20,7 +20,9 @@ struct {
 
 extern char end[]; // first address after kernel loaded from ELF file
 int kinitUse;
-
+int dumpFrames[512];
+int numDumpFrames;
+int totalArr;
 // Initialize free list of physical pages.
 void
 kinit(void)
@@ -49,13 +51,20 @@ kfree(char *v)
   memset(v, 1, PGSIZE);
 
   acquire(&kmem.lock);
+  for (int i = 0; i < 512; i++) {
+         if (dumpFrames[i] == (int) v) {
+                dumpFrames[i] = 0;
+                numDumpFrames--;
+                break;
+         }
+  }
   r = (struct run*)v;
   if (r->hasNext == 1) {
 	  (r->next)->next = kmem.freelist;
 	  kmem.freelist = r;
   } else {
-  r->next = kmem.freelist;
-  kmem.freelist = r;
+  	r->next = kmem.freelist;
+  	kmem.freelist = r;
   }
   release(&kmem.lock);
 }
@@ -75,10 +84,35 @@ kalloc(void)
       	r->hasNext = 1;
       	kmem.freelist = (r->next)->next;
       } else {
+	      //cant follow the alternate allocation scheme so return null
 	      return NULL;
       }
+  }
+  for (int i = totalArr; i < 512; i++) {
+          if (dumpFrames[i] == 0) {
+                  dumpFrames[i] = (int)r;
+                  numDumpFrames++;
+                  totalArr++;
+                  break;
+          }
   }
   release(&kmem.lock);
   return (char*)r;
 }
 
+int dump_allocated_helper(int *frames, int numframes) {
+        if ((numframes > numDumpFrames) || (numframes <= 0)) {
+                return -1;
+        }
+        int j = 0;
+        for (int i = 511; i >= 0; i--) {
+                if (dumpFrames[i] != 0) {
+                        frames[j] = dumpFrames[i];
+                        j++;
+                        if (numframes <= j) {
+                                break;
+                        }
+                }
+        }
+        return 0;
+}

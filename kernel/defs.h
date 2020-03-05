@@ -66,6 +66,7 @@ void            ioapicinit(void);
 char*           kalloc(void);
 void            kfree(char*);
 void            kinit(void);
+int             dump_allocated_helper(int *frames, int numframes);
 
 // kbd.c
 void            kbdintr(void);
@@ -173,7 +174,6 @@ void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 int		mprotect_helper(pde_t *pgdir, void *va, int len);
 int 		munprotect_helper(pde_t *pgdir, void *va, int len);
-int    		dumpalloc_helper(int *frames, int numFrames);
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
 

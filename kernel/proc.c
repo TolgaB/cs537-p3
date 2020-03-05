@@ -449,14 +449,11 @@ int mprotect(void *addr, int len) {
 	if ((((int)addr % PGSIZE) != 0) || (len <= 0)) {
 		return -1;
 	}
+	//check if out of bounds
 	if (((int)addr + (len * PGSIZE)) > (proc->sz)) {
 		return -1;
 	}
-	if (mprotect_helper(proc->pgdir, addr, len) == -1) {
-		return -1;
-	}
-	//TODO:CHECK IF IN VALID ADDR SPACE
-	return 0;
+	return mprotect_helper(proc->pgdir, addr, len);
 }
 
 //Add write perms to the pages specified
@@ -468,14 +465,9 @@ int munprotect(void *addr, int len) {
 	if (((int)addr + (len * PGSIZE)) > (proc->sz)) {
                 return -1;
         }
-	if (munprotect_helper(proc->pgdir, addr, len) == -1) {
-		return -1;
-	}
-
-	//TODO:CHECK IF IN VALID ADDR SPACE AND FLUSH
-	return 0;
+	return munprotect_helper(proc->pgdir, addr, len);
 }
 
 int dump_allocated(int *frames, int numframes) {
-	return dumpalloc_helper(frames, numframes);
+	return dump_allocated_helper(frames, numframes);
 }

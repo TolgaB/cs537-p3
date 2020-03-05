@@ -10,8 +10,6 @@ extern char data[];  // defined in data.S
 
 static pde_t *kpgdir;  // for use in scheduler()
 
-int dumpFrames[512];
-int numDumpFrame;
 // Allocate one page table for the machine for the kernel address
 // space for scheduler processes.
 void
@@ -107,23 +105,6 @@ munprotect_helper(pde_t *pgdir, void *va, int len) {
 	return 0;
 }
 
-int
-dumpalloc_helper(int *frames, int numFrames) {
-	if ((numFrames > numDumpFrame) || (numFrames <= 0)) {
-		return -1;
-	}
-	int j = 0;
-	for (int i = 511; i >= 0; i--) {
-		if (dumpFrames[i] != 0) {
-			frames[j] = dumpFrames[i];
-			j++;
-			if (numFrames == j) {
-				break;
-			}
-		}
-	}
-	return 0;
-}
 // Create PTEs for linear addresses starting at la that refer to
 // physical addresses starting at pa. la and size might not
 // be page-aligned.
@@ -248,13 +229,6 @@ inituvm(pde_t *pgdir, char *init, uint sz)
     panic("inituvm: more than a page");
   mem = kalloc();
   memset(mem, 0, PGSIZE);
-  for (int i = 0; i < 512; i++) {
-	  if (dumpFrames[i] == 0) {
-		  dumpFrames[i] = PADDR(mem);
-		  numDumpFrame++;
-		  break;
-	  }
-  }
   mappages(pgdir, 0, PGSIZE, PADDR(mem), PTE_W|PTE_U);
   memmove(mem, init, sz);
 }
@@ -305,13 +279,6 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       return 0;
     }
     memset(mem, 0, PGSIZE);
-    for (int i = 0; i < 512; i++) {
-          if (dumpFrames[i] == 0) {
-                  dumpFrames[i] = PADDR(mem);
-		  numDumpFrame++;
-                  break;
-          }
-    }
     mappages(pgdir, (char*)a, PGSIZE, PADDR(mem), PTE_W|PTE_U);
   }
   return newsz;
@@ -337,14 +304,6 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       pa = PTE_ADDR(*pte);
       if(pa == 0)
         panic("kfree");
-      //for the dump func
-      for(int i = 0; i < 512; i++) {
-	      if (dumpFrames[i] == *((char*)pa)) {
-		      dumpFrames[i] = 0;
-		      numDumpFrame--;
-		      break;
-	      }
-      }
       kfree((char*)pa);
       *pte = 0;
     }

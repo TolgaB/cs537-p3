@@ -66,10 +66,7 @@ sys_mprotect(void)
    if (argint(1,&len) < 0) {
 	   return -1;
    }
-   if (mprotect(addr,len) < 0) {
-	   return -1;
-   }
-   return 0;
+   return mprotect(addr, len);
 }
 
 int
@@ -83,10 +80,7 @@ sys_munprotect(void)
 	if (argint(1,&len)< 0) {
 		return -1;
 	}
-	if (munprotect(addr,len) < 0) {
-		return -1;
-	}
-	return 0;
+	return munprotect(addr, len);
 }
 
 int
@@ -100,11 +94,7 @@ sys_dump_allocated(void)
 	if (argint(1,&numFrames) < 0) {
 		return -1;
 	}
-	if (dump_allocated(frames,numFrames) < 0) {
-		cprintf("test\n");
-		return -1;
-	}
-	return 0;
+	return dump_allocated(frames, numFrames);
 }
 
 int
