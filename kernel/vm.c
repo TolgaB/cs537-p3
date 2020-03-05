@@ -109,7 +109,6 @@ munprotect_helper(pde_t *pgdir, void *va, int len) {
 
 int
 dumpalloc_helper(int *frames, int numFrames) {
-	cprintf("numFrames:%d and actualNum%d\n", numFrames, numDumpFrame);
 	if ((numFrames > numDumpFrame) || (numFrames <= 0)) {
 		return -1;
 	}

@@ -10,6 +10,7 @@
 
 struct run {
   struct run *next;
+  int hasNext;
 };
 
 struct {
@@ -18,17 +19,18 @@ struct {
 } kmem;
 
 extern char end[]; // first address after kernel loaded from ELF file
+int kinitUse;
 
 // Initialize free list of physical pages.
 void
 kinit(void)
 {
   char *p;
-
   initlock(&kmem.lock, "kmem");
   p = (char*)PGROUNDUP((uint)end);
-  for(; p + PGSIZE <= (char*)PHYSTOP; p += PGSIZE)
+  for(; p + PGSIZE <= (char*)PHYSTOP; p += PGSIZE) {
     kfree(p);
+  }
 }
 
 // Free the page of physical memory pointed at by v,
@@ -48,8 +50,13 @@ kfree(char *v)
 
   acquire(&kmem.lock);
   r = (struct run*)v;
+  if (r->hasNext == 1) {
+	  (r->next)->next = kmem.freelist;
+	  kmem.freelist = r;
+  } else {
   r->next = kmem.freelist;
   kmem.freelist = r;
+  }
   release(&kmem.lock);
 }
 
@@ -64,7 +71,7 @@ kalloc(void)
   acquire(&kmem.lock);
   r = kmem.freelist;
   if(r) {
-   // kmem.freelist = r->next;
+      r->hasNext = 1;
       kmem.freelist = (r->next)->next;
   }
   release(&kmem.lock);
